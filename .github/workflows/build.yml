@@ -1,0 +1,27 @@
+# 手動觸發（Actions 頁面 → Run workflow），在 GitHub 的 macOS / Windows 機器上打包，成品在 Artifacts 下載。
+name: build
+on: workflow_dispatch
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: ./build-mac.sh
+        if: runner.os == 'macOS'
+      - run: npm run dist:win
+        if: runner.os == 'Windows'
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shima-enaga-${{ runner.os }}
+          path: |
+            dist/*.dmg
+            dist/*.exe
